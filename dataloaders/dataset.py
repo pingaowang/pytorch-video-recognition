@@ -23,7 +23,13 @@ class VideoDataset(Dataset):
 
     def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False):
         self.root_dir, self.output_dir = Path.db_dir(dataset)
+
+        # folder path of data_roor/train_or_val_or_test
         folder = os.path.join(self.output_dir, split)
+        listdir_folder = os.listdir(folder)
+        if '.DS_Store' in listdir_folder:
+            listdir_folder.remove('.DS_Store')
+
         self.clip_len = clip_len
         self.split = split
 
@@ -32,21 +38,23 @@ class VideoDataset(Dataset):
         self.resize_width = 171
         self.crop_size = 112
 
-        if not self.check_integrity():
-            raise RuntimeError('Dataset not found or corrupted.' +
-                               ' You need to download it from official website.')
-
+        """
         if (not self.check_preprocess()) or preprocess:
+            if not self.check_integrity():
+                raise RuntimeError('Dataset not found or corrupted.' +
+                                   ' You need to download it from official website.')
             print('Preprocessing of {} dataset, this will take long, but it will be done only once.'.format(dataset))
-            self.preprocess()
+            self.preprocess()"""
 
         # Obtain all the filenames of files inside all the class folders
         # Going through each class folder one at a time
         self.fnames, labels = [], []
-        for label in sorted(os.listdir(folder)):
-            for fname in os.listdir(os.path.join(folder, label)):
-                self.fnames.append(os.path.join(folder, label, fname))
-                labels.append(label)
+        for label in sorted(listdir_folder):
+            listdir_label_folder = os.listdir(os.path.join(folder, label))
+            for fname in listdir_label_folder:
+                if fname != '.DS_Store':
+                    self.fnames.append(os.path.join(folder, label, fname))
+                    labels.append(label)
 
         assert len(labels) == len(self.fnames)
         print('Number of {} videos: {:d}'.format(split, len(self.fnames)))
@@ -99,17 +107,20 @@ class VideoDataset(Dataset):
             return False
 
         for ii, video_class in enumerate(os.listdir(os.path.join(self.output_dir, 'train'))):
-            for video in os.listdir(os.path.join(self.output_dir, 'train', video_class)):
-                video_name = os.path.join(os.path.join(self.output_dir, 'train', video_class, video),
-                                    sorted(os.listdir(os.path.join(self.output_dir, 'train', video_class, video)))[0])
-                image = cv2.imread(video_name)
-                if np.shape(image)[0] != 128 or np.shape(image)[1] != 171:
-                    return False
-                else:
-                    break
+            if video_class == '.DS_Store':
+                print("There is a .DS_Store in: " + os.path.join(self.output_dir, 'train'))
+            else:
+                for video in os.listdir(os.path.join(self.output_dir, 'train', video_class)):
+                    video_name = os.path.join(os.path.join(self.output_dir, 'train', video_class, video),
+                                        sorted(os.listdir(os.path.join(self.output_dir, 'train', video_class, video)))[0])
+                    image = cv2.imread(video_name)
+                    if np.shape(image)[0] != 128 or np.shape(image)[1] != 171:
+                        return False
+                    else:
+                        break
 
-            if ii == 10:
-                break
+                if ii == 10:
+                    break
 
         return True
 
@@ -123,30 +134,34 @@ class VideoDataset(Dataset):
         # Split train/val/test sets
         for file in os.listdir(self.root_dir):
             file_path = os.path.join(self.root_dir, file)
-            video_files = [name for name in os.listdir(file_path)]
+            if '.DS_Store' in file_path:
+                print(".DS_Store is here: " + file_path)
+            else:
+                l_file_names = os.listdir(file_path)
+                video_files = [name for name in l_file_names]
 
-            train_and_valid, test = train_test_split(video_files, test_size=0.2, random_state=42)
-            train, val = train_test_split(train_and_valid, test_size=0.2, random_state=42)
+                train_and_valid, test = train_test_split(video_files, test_size=0.2, random_state=42)
+                train, val = train_test_split(train_and_valid, test_size=0.2, random_state=42)
 
-            train_dir = os.path.join(self.output_dir, 'train', file)
-            val_dir = os.path.join(self.output_dir, 'val', file)
-            test_dir = os.path.join(self.output_dir, 'test', file)
+                train_dir = os.path.join(self.output_dir, 'train', file)
+                val_dir = os.path.join(self.output_dir, 'val', file)
+                test_dir = os.path.join(self.output_dir, 'test', file)
 
-            if not os.path.exists(train_dir):
-                os.mkdir(train_dir)
-            if not os.path.exists(val_dir):
-                os.mkdir(val_dir)
-            if not os.path.exists(test_dir):
-                os.mkdir(test_dir)
+                if not os.path.exists(train_dir):
+                    os.mkdir(train_dir)
+                if not os.path.exists(val_dir):
+                    os.mkdir(val_dir)
+                if not os.path.exists(test_dir):
+                    os.mkdir(test_dir)
 
-            for video in train:
-                self.process_video(video, file, train_dir)
+                for video in train:
+                    self.process_video(video, file, train_dir)
 
-            for video in val:
-                self.process_video(video, file, val_dir)
+                for video in val:
+                    self.process_video(video, file, val_dir)
 
-            for video in test:
-                self.process_video(video, file, test_dir)
+                for video in test:
+                    self.process_video(video, file, test_dir)
 
         print('Preprocessing finished.')
 

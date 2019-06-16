@@ -18,12 +18,23 @@ from network import C3D_model, R2Plus1D_model, R3D_model
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Device being used:", device)
 
-nEpochs = 100  # Number of epochs for training
+nEpochs = 2  # Number of epochs for training
+BS = 4 # batch size
+N_WORKERS = 8
 resume_epoch = 0  # Default is 0, change if want to resume
+resume_model_path = None
 useTest = True # See evolution of the test set when training
 nTestInterval = 20 # Run on test set every nTestInterval epochs
-snapshot = 50 # Store a model every snapshot epochs
+snapshot = 20 # Store a model every snapshot epochs
+
 lr = 1e-3 # Learning rate
+MOMENTUM = 0.9
+WD = 5e-4
+
+IF_PRETRAIN = False
+IF_PREPROCESS_TRAIN = False
+IF_PREPROCESS_VAL = False
+IF_PREPROCESS_TEST = False
 
 dataset = 'ucf101' # Options: hmdb51 or ucf101
 
@@ -46,6 +57,11 @@ else:
     run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
 
 save_dir = os.path.join(save_dir_root, 'run', 'run_' + str(run_id))
+if not os.path.isdir(save_dir):
+    os.mkdir(save_dir)
+if not os.path.isdir(os.path.join(save_dir, 'models')):
+    os.mkdir(os.path.join(save_dir, 'models'))
+
 modelName = 'C3D' # Options: C3D or R2Plus1D or R3D
 saveName = modelName + '-' + dataset
 
@@ -58,7 +74,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     """
 
     if modelName == 'C3D':
-        model = C3D_model.C3D(num_classes=num_classes, pretrained=True)
+        model = C3D_model.C3D(num_classes=num_classes, pretrained=IF_PRETRAIN)
         train_params = [{'params': C3D_model.get_1x_lr_params(model), 'lr': lr},
                         {'params': C3D_model.get_10x_lr_params(model), 'lr': lr * 10}]
     elif modelName == 'R2Plus1D':
@@ -72,12 +88,21 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
         print('We only implemented C3D and R2Plus1D models.')
         raise NotImplementedError
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
-    optimizer = optim.SGD(train_params, lr=lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10,
                                           gamma=0.1)  # the scheduler divides the lr by 10 every 10 epochs
 
     if resume_epoch == 0:
-        print("Training {} from scratch...".format(modelName))
+        if resume_model_path == None:
+            print("Training {} from scratch...".format(modelName))
+        else:
+            checkpoint = torch.load(
+                resume_model_path,
+                map_location=lambda storage, loc: storage)  # Load all tensors onto the CPU
+            print("Initializing weights from: {}...".format(
+                resume_model_path))
+            model.load_state_dict(checkpoint['state_dict'])
+            optimizer.load_state_dict(checkpoint['opt_dict'])
     else:
         checkpoint = torch.load(os.path.join(save_dir, 'models', saveName + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
                        map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
@@ -91,16 +116,18 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     criterion.to(device)
 
     log_dir = os.path.join(save_dir, 'models', datetime.now().strftime('%b%d_%H-%M-%S') + '_' + socket.gethostname())
-    writer = SummaryWriter(log_dir=log_dir)
+    writer = SummaryWriter(logdir=log_dir)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=20, shuffle=True, num_workers=4)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=20, num_workers=4)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=20, num_workers=4)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16, preprocess=IF_PREPROCESS_TRAIN), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16, preprocess=IF_PREPROCESS_VAL), batch_size=BS, num_workers=N_WORKERS)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16, preprocess=IF_PREPROCESS_TEST), batch_size=BS, num_workers=N_WORKERS)
 
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}
     test_size = len(test_dataloader.dataset)
+
+    global_best_val_acc = 0
 
     for epoch in range(resume_epoch, num_epochs):
         # each epoch has a training and validation step
@@ -152,6 +179,14 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             else:
                 writer.add_scalar('data/val_loss_epoch', epoch_loss, epoch)
                 writer.add_scalar('data/val_acc_epoch', epoch_acc, epoch)
+                if epoch_acc >= global_best_val_acc:
+                    torch.save({
+                        'epoch': epoch + 1,
+                        'state_dict': model.state_dict(),
+                        'opt_dict': optimizer.state_dict(),
+                    }, os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar'))
+                    print("Save model at {}\n".format(
+                        os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
 
             print("[{}] Epoch: {}/{} Loss: {} Acc: {}".format(phase, epoch+1, nEpochs, epoch_loss, epoch_acc))
             stop_time = timeit.default_timer()
