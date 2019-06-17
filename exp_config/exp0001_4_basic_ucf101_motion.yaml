@@ -1,6 +1,6 @@
 ##-- Experiment info exp_run_config --##
 # experiment name. Keep it unique.
-exp_name: exp001_3_basic_ucf101_motion
+exp_name: exp001_4_basic_ucf101_motion
 use_test: True
 n_test_interval: 20
 if_pretrain: False
