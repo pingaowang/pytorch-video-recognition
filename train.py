@@ -91,6 +91,9 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=SCHEDULER_STEP_SIZE,
                                           gamma=SCHEDULER_GAMMA)  # the scheduler divides the lr by 10 every 10 epochs
 
+    model.to(device)
+    criterion.to(device)
+
     if resume_epoch == 0:
         if resume_model_path == None:
             print("Training {} from scratch...".format(modelName))
@@ -112,15 +115,13 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
 
     print('Total params: %.2fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
     model.to(device)
-    if torch.cuda.is_available():
-        optimizer = optimizer.cuda()
     criterion.to(device)
 
     log_dir = os.path.join(save_dir, 'models', datetime.now().strftime('%b%d_%H-%M-%S') + '_' + socket.gethostname())
     writer = SummaryWriter(logdir=log_dir)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16, preprocess=IF_PREPROCESS_TRAIN), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=16, preprocess=IF_PREPROCESS_TRAIN), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
     val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16, preprocess=IF_PREPROCESS_VAL), batch_size=BS, num_workers=N_WORKERS)
     test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16, preprocess=IF_PREPROCESS_TEST), batch_size=BS, num_workers=N_WORKERS)
 
