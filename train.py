@@ -112,7 +112,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
 
     print('Total params: %.2fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
     model.to(device)
-    if device[:4] == 'cuda':
+    if torch.cuda.is_available():
         optimizer = optimizer.cuda()
     criterion.to(device)
 
