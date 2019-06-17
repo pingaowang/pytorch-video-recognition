@@ -1,3 +1,5 @@
+from exp_config_reader import *
+
 class Path(object):
     @staticmethod
     def db_dir(database):
@@ -6,7 +8,7 @@ class Path(object):
             root_dir = '/Users/pingaowang/Google Drive/study/video_classification_research/datasets/UCF-101'
 
             # Save preprocess data into output_dir
-            output_dir = '/Users/pingaowang/Google Drive/study/video_classification_research/pytorch-video-recognition/data/ucf101_motion_mini'
+            output_dir = DATA_PATH# '/Users/pingaowang/Google Drive/study/video_classification_research/pytorch-video-recognition/data/ucf101_motion_mini'
 
             return root_dir, output_dir
         elif database == 'hmdb51':

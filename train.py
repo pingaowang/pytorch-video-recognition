@@ -14,29 +14,28 @@ from torch.autograd import Variable
 from dataloaders.dataset import VideoDataset
 from network import C3D_model, R2Plus1D_model, R3D_model
 
+from exp_config_reader import *
+
+
 # Use GPU if available else revert to CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Device being used:", device)
 
-nEpochs = 2  # Number of epochs for training
-BS = 4 # batch size
-N_WORKERS = 8
-resume_epoch = 0  # Default is 0, change if want to resume
-resume_model_path = None
-useTest = True # See evolution of the test set when training
-nTestInterval = 20 # Run on test set every nTestInterval epochs
-snapshot = 20 # Store a model every snapshot epochs
+nEpochs = MAX_EPOCH  # Number of epochs for training
+BS = BATCH_SIZE # batch size
+resume_epoch = RESUM_EPOCH  # Default is 0, change if want to resume
+resume_model_path = RESUM_MODEL_PATH
+useTest = USE_TEST # See evolution of the test set when training
+nTestInterval = N_TEST_INTERVAL # Run on test set every nTestInterval epochs
+snapshot = SNAPSHOT # Store a model every snapshot epochs
 
-lr = 1e-3 # Learning rate
-MOMENTUM = 0.9
-WD = 5e-4
+lr = INIT_LEARNING_RATE # Learning rate
 
-IF_PRETRAIN = False
 IF_PREPROCESS_TRAIN = False
 IF_PREPROCESS_VAL = False
 IF_PREPROCESS_TEST = False
 
-dataset = 'ucf101' # Options: hmdb51 or ucf101
+dataset = DATASET # Options: hmdb51 or ucf101
 
 if dataset == 'hmdb51':
     num_classes=51
@@ -62,8 +61,8 @@ if not os.path.isdir(save_dir):
 if not os.path.isdir(os.path.join(save_dir, 'models')):
     os.mkdir(os.path.join(save_dir, 'models'))
 
-modelName = 'C3D' # Options: C3D or R2Plus1D or R3D
-saveName = modelName + '-' + dataset
+modelName = MODEL_NAME # Options: C3D or R2Plus1D or R3D
+saveName = EXP_NAME
 
 def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=lr,
                 num_epochs=nEpochs, save_epoch=snapshot, useTest=useTest, test_interval=nTestInterval):
