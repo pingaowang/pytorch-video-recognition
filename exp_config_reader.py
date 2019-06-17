@@ -35,6 +35,7 @@ MODEL_NAME = config['model_name']
 BATCH_SIZE = config['batch_size']
 SNAPSHOT = config['snapshot']
 MAX_EPOCH = config['max_epoch']
+N_CLASSES = config['n_classes']
 # aug for optimizers:
 INIT_LEARNING_RATE = config['init_learning_rate']
 MOMENTUM = config['momentum']

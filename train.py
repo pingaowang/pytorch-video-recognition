@@ -40,7 +40,7 @@ dataset = DATASET # Options: hmdb51 or ucf101
 if dataset == 'hmdb51':
     num_classes=51
 elif dataset == 'ucf101':
-    num_classes = 101
+    num_classes = N_CLASSES
 else:
     print('We only implemented hmdb and ucf datasets.')
     raise NotImplementedError

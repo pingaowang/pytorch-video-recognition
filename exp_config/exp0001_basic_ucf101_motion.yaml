@@ -11,6 +11,7 @@ if_pretrain: False
 # The original file is : 'ucf101.csv'
 data_path: data/ucf101_motion
 dataset: ucf101
+n_classes: 16
 n_workers: 64
 
 
