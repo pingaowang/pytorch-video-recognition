@@ -16,7 +16,7 @@ n_workers: 8
 
 
 ##-- Load saved model exp_run_config --##
-resume_model_path: /run/run_4/models/exp001_basic_ucf101_motion_epoch-99.pth.tar
+resume_model_path: run/run_4/models/exp001_basic_ucf101_motion_epoch-99.pth.tar
 resume_epoch: 0
 
 
