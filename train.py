@@ -163,7 +163,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
 
                 probs = nn.Softmax(dim=1)(outputs)
                 preds = torch.max(probs, 1)[1]
-                loss = criterion(outputs, labels)
+                # loss = criterion(outputs, labels)
+                loss = criterion(probs, labels)
 
                 if phase == 'train':
                     loss.backward()
