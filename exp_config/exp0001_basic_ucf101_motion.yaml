@@ -22,7 +22,7 @@ resume_epoch: 0
 
 ##-- Model exp_run_config --##
 model_name: C3D
-batch_size: 32
+batch_size: 512
 snapshot: 10
 max_epoch: 100
 
