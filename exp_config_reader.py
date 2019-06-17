@@ -38,5 +38,7 @@ MAX_EPOCH = config['max_epoch']
 N_CLASSES = config['n_classes']
 # aug for optimizers:
 INIT_LEARNING_RATE = config['init_learning_rate']
+SCHEDULER_STEP_SIZE = config['scheduler_step_size']
+SCHEDULER_GAMMA = config['scheduler_gamma']
 MOMENTUM = config['momentum']
 WD = config['wd']
