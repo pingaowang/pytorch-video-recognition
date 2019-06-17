@@ -89,7 +89,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
     optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10,
-                                          gamma=0.1)  # the scheduler divides the lr by 10 every 10 epochs
+                                          gamma=0.5)  # the scheduler divides the lr by 10 every 10 epochs
 
     if resume_epoch == 0:
         if resume_model_path == None:
@@ -178,14 +178,14 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             else:
                 writer.add_scalar('data/val_loss_epoch', epoch_loss, epoch)
                 writer.add_scalar('data/val_acc_epoch', epoch_acc, epoch)
-                if epoch_acc >= global_best_val_acc:
-                    torch.save({
-                        'epoch': epoch + 1,
-                        'state_dict': model.state_dict(),
-                        'opt_dict': optimizer.state_dict(),
-                    }, os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar'))
-                    print("Save model at {}\n".format(
-                        os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
+                # if epoch_acc >= global_best_val_acc:
+                #     torch.save({
+                #         'epoch': epoch + 1,
+                #         'state_dict': model.state_dict(),
+                #         'opt_dict': optimizer.state_dict(),
+                #     }, os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar'))
+                #     print("Save model at {}\n".format(
+                #         os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
 
             print("[{}] Epoch: {}/{} Loss: {} Acc: {}".format(phase, epoch+1, nEpochs, epoch_loss, epoch_acc))
             stop_time = timeit.default_timer()
