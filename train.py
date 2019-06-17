@@ -89,7 +89,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
     optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10,
-                                          gamma=0.5)  # the scheduler divides the lr by 10 every 10 epochs
+                                          gamma=0.1)  # the scheduler divides the lr by 10 every 10 epochs
 
     if resume_epoch == 0:
         if resume_model_path == None:
