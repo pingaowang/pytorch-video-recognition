@@ -91,8 +91,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=SCHEDULER_STEP_SIZE,
                                           gamma=SCHEDULER_GAMMA)  # the scheduler divides the lr by 10 every 10 epochs
 
-    model.to(device)
-    criterion.to(device)
+    # model.to(device)
+    # criterion.to(device)
 
     if resume_epoch == 0:
         if resume_model_path == None:
