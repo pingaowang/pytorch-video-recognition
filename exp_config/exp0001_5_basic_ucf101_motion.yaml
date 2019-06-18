@@ -1,6 +1,6 @@
 ##-- Experiment info exp_run_config --##
 # experiment name. Keep it unique.
-exp_name: exp0001_4_basic_ucf101_motion
+exp_name: exp0001_5_basic_ucf101_motion
 use_test: True
 n_test_interval: 20
 if_pretrain: False
@@ -16,7 +16,7 @@ n_workers: 8
 
 
 ##-- Load saved model exp_run_config --##
-resume_model_path:
+resume_model_path: run/run_8/models/exp001_basic_ucf101_motion_epoch-29.pth.tar
 resume_epoch: 0
 
 
@@ -24,9 +24,9 @@ resume_epoch: 0
 model_name: C3D
 batch_size: 32
 snapshot: 10
-max_epoch: 200
+max_epoch: 100
 
-init_learning_rate: 0.0001
+init_learning_rate: 0.00001
 scheduler_step_size: 50
 scheduler_gamma: 0.1
 momentum: 0.9
