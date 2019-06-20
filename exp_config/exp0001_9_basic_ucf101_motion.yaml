@@ -1,0 +1,34 @@
+##-- Experiment info exp_run_config --##
+# experiment name. Keep it unique.
+exp_name: exp0001_9_basic_ucf101_motion
+use_test: True
+n_test_interval: 20
+if_pretrain: False
+
+
+##-- Dataset exp_run_config --##
+# the path of the index csv file of the used data (like UCF101's csv file).
+# The original file is : 'ucf101.csv'
+data_path: data/ucf101_motion
+dataset: ucf101
+n_classes: 16
+n_workers: 8
+
+
+##-- Load saved model exp_run_config --##
+resume_model_path: run/run_10/models/exp0001_8_basic_ucf101_motion_epoch-339.pth.tar
+resume_epoch: 0
+
+
+##-- Model exp_run_config --##
+model_name: C3D
+batch_size: 32
+snapshot: 10
+max_epoch: 400
+
+init_learning_rate: 0.000001
+scheduler_step_size: 100
+scheduler_gamma: 0.1
+momentum: 0.9
+wd: 0
+
