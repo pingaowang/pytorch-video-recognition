@@ -107,7 +107,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             optimizer.load_state_dict(checkpoint['opt_dict'])
     else:
         checkpoint = torch.load(os.path.join(save_dir, 'models', saveName + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
-                       map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
+                                map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
         print("Initializing weights from: {}...".format(
             os.path.join(save_dir, 'models', saveName + '_epoch-' + str(resume_epoch - 1) + '.pth.tar')))
         model.load_state_dict(checkpoint['state_dict'])
