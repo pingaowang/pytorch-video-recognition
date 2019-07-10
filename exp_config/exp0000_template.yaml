@@ -10,7 +10,7 @@ if_pretrain: False
 # the path of the index csv file of the used data (like UCF101's csv file).
 # The original file is : 'ucf101.csv'
 data_path: data/ucf101_motion_mini
-dataset: ucf101
+dataset: ucf_motion
 n_classes: 16
 n_workers: 8
 

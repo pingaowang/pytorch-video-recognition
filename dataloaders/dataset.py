@@ -24,8 +24,9 @@ class VideoDataset(Dataset):
     def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False):
         self.root_dir, self.output_dir = Path.db_dir(dataset)
 
-        # folder path of data_roor/train_or_val_or_test
+        # folder: Root. the path of data_root/train_or_val_or_test
         folder = os.path.join(self.output_dir, split)
+        # listdir_folder: A list of all classes' folders
         listdir_folder = os.listdir(folder)
         if '.DS_Store' in listdir_folder:
             listdir_folder.remove('.DS_Store')
@@ -39,6 +40,7 @@ class VideoDataset(Dataset):
         self.crop_size = 112
 
         """
+        # Data pre-processing.
         if (not self.check_preprocess()) or preprocess:
             if not self.check_integrity():
                 raise RuntimeError('Dataset not found or corrupted.' +
@@ -48,7 +50,7 @@ class VideoDataset(Dataset):
 
         # Obtain all the filenames of files inside all the class folders
         # Going through each class folder one at a time
-        self.fnames, labels = [], []
+        self.fnames, labels = [], [] # self.fnames: name of folders under each class folder.
         for label in sorted(listdir_folder):
             listdir_label_folder = os.listdir(os.path.join(folder, label))
             for fname in listdir_label_folder:
@@ -61,7 +63,7 @@ class VideoDataset(Dataset):
 
         # Prepare a mapping between the label names (strings) and indices (ints)
         self.label2index = {label: index for index, label in enumerate(sorted(set(labels)))}
-        # Convert the list of label names into an array of label indices
+        # Convert the list of label names into an array of label indices: array([0, 1, ... , n_classes])
         self.label_array = np.array([self.label2index[label] for label in labels], dtype=int)
 
         if dataset == "ucf101":
@@ -76,13 +78,22 @@ class VideoDataset(Dataset):
                     for id, label in enumerate(sorted(self.label2index)):
                         f.writelines(str(id+1) + ' ' + label + '\n')
 
+        else:
+            # define the path of label_txt file.
+            path_label_txt = 'dataloaders/' + dataset + '_labels.txt'
+            if not os.path.exists(path_label_txt):
+                with open(path_label_txt, 'w') as f:
+                    for id, label in enumerate(sorted(self.label2index)):
+                        f.writelines(str(id + 1) + ' ' + label + '\n')
+
 
     def __len__(self):
         return len(self.fnames)
 
     def __getitem__(self, index):
-        # Loading and preprocessing.
+        # Load a seq of images
         buffer = self.load_frames(self.fnames[index])
+        # Crop the seq of images
         buffer = self.crop(buffer, self.clip_len, self.crop_size)
         labels = np.array(self.label_array[index])
 
