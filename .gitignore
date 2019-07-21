@@ -107,3 +107,9 @@ venv.bak/
 .mypy_cache/
 
 .DS_Store
+
+# datasets
+data/ucf101/
+data/ucf101_motion.zip
+data/ucf101_motion/
+data/ucf101_motion_mini.zip

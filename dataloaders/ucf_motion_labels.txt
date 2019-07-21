@@ -1,0 +1,16 @@
+1 BabyCrawling
+2 BlowingCandles
+3 BodyWeightSquats
+4 HandstandPushups
+5 HandstandWalking
+6 JumpingJack
+7 Lunges
+8 PullUps
+9 PushUps
+10 RockClimbingIndoor
+11 RopeClimbing
+12 Swing
+13 TaiChi
+14 TrampolineJumping
+15 WalkingWithDog
+16 WallPushups
