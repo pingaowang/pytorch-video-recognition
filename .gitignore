@@ -113,3 +113,8 @@ data/ucf101/
 data/ucf101_motion.zip
 data/ucf101_motion/
 data/ucf101_motion_mini.zip
+data/KTH
+data/KTH_video
+data/KTH_jpg_raw
+
+play.py
