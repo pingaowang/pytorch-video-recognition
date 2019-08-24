@@ -16,18 +16,21 @@ from network import C3D_model, R2Plus1D_model, R3D_model
 
 from exp_config_reader import *
 
+import torch.backends.cudnn as cudnn
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 
 # Use GPU if available else revert to CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Device being used:", device)
 
 nEpochs = MAX_EPOCH  # Number of epochs for training
-BS = BATCH_SIZE # batch size
+BS = BATCH_SIZE  # batch size
 resume_epoch = RESUM_EPOCH  # Default is 0, change if want to resume
 resume_model_path = RESUM_MODEL_PATH
-useTest = USE_TEST # See evolution of the test set when training
+useTest = USE_TEST  # See evolution of the test set when training
 nTestInterval = N_TEST_INTERVAL # Run on test set every nTestInterval epochs
-snapshot = SNAPSHOT # Store a model every snapshot epochs
+snapshot = SNAPSHOT  # Store a model every snapshot epochs
 
 lr = INIT_LEARNING_RATE # Learning rate
 
@@ -38,7 +41,7 @@ IF_PREPROCESS_TEST = False
 dataset = DATASET # Options: hmdb51 or ucf101
 
 if dataset == 'hmdb51':
-    num_classes=51
+    num_classes = 51
 elif dataset == 'ucf101':
     num_classes = N_CLASSES
 elif dataset == 'ucf_motion':
@@ -47,26 +50,39 @@ else:
     print('We only implemented hmdb and ucf datasets.')
     raise NotImplementedError
 
-save_dir_root = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-exp_name = os.path.dirname(os.path.abspath(__file__)).split('/')[-1]
+# save_dir_root = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
-if resume_epoch != 0:
-    runs = sorted(glob.glob(os.path.join(save_dir_root, 'run', 'run_*')))
-    run_id = int(runs[-1].split('_')[-1]) if runs else 0
-else:
-    runs = sorted(glob.glob(os.path.join(save_dir_root, 'run', 'run_*')))
-    run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
 
-save_dir = os.path.join(save_dir_root, 'run', 'run_' + str(run_id))
-if not os.path.isdir(save_dir):
-    os.mkdir(save_dir)
-if not os.path.isdir(os.path.join(save_dir, 'models')):
-    os.mkdir(os.path.join(save_dir, 'models'))
+"""
+Folder Preparing
+"""
+# check and make log folder
+if not os.path.isdir(LOG_ROOT):
+    os.mkdir(LOG_ROOT)
+assert not os.path.isdir(LOG_PATH), "The log folder exists."
+# check and make saved_models folder
+if not os.path.isdir(SAVE_ROOT):
+    os.mkdir(SAVE_ROOT)
+# save folders
+SAVE_FILE_FOLDER = os.path.join(SAVE_ROOT, EXP_NAME)
+# create saving folders
+assert not os.path.isdir(SAVE_FILE_FOLDER), "The model saving folder exists."
+os.mkdir(SAVE_FILE_FOLDER)
 
-modelName = MODEL_NAME # Options: C3D or R2Plus1D or R3D
-saveName = EXP_NAME
 
-def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=lr,
+# exp_name = os.path.dirname(os.path.abspath(__file__)).split('/')[-1]
+
+# Need to be removed.
+# if resume_epoch != 0:
+#     runs = sorted(glob.glob(os.path.join(save_dir_root, 'run', 'run_*')))
+#     run_id = int(runs[-1].split('_')[-1]) if runs else 0
+# else:
+#     runs = sorted(glob.glob(os.path.join(save_dir_root, 'run', 'run_*')))
+#     run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
+
+modelName = MODEL_NAME  # Options: C3D or R2Plus1D or R3D
+
+def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_classes, lr=lr,
                 num_epochs=nEpochs, save_epoch=snapshot, useTest=useTest, test_interval=nTestInterval):
     """
         Args:
@@ -90,6 +106,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
         raise NotImplementedError
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
     optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
+    print(optimizer)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=SCHEDULER_STEP_SIZE,
                                           gamma=SCHEDULER_GAMMA)  # the scheduler divides the lr by 10 every 10 epochs
 
@@ -108,10 +125,10 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['opt_dict'])
     else:
-        checkpoint = torch.load(os.path.join(save_dir, 'models', saveName + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
+        checkpoint = torch.load(os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
                                 map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
         print("Initializing weights from: {}...".format(
-            os.path.join(save_dir, 'models', saveName + '_epoch-' + str(resume_epoch - 1) + '.pth.tar')))
+            os.path.join(SAVE_FILE_FOLDER, EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar')))
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['opt_dict'])
 
@@ -119,8 +136,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     model.to(device)
     criterion.to(device)
 
-    log_dir = os.path.join(save_dir, 'models', datetime.now().strftime('%b%d_%H-%M-%S') + '_' + socket.gethostname())
-    writer = SummaryWriter(logdir=log_dir)
+    writer = SummaryWriter(logdir=LOG_PATH)
 
     print('Training model on {} dataset...'.format(dataset))
     train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=16, preprocess=IF_PREPROCESS_TRAIN), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
@@ -130,6 +146,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}
     test_size = len(test_dataloader.dataset)
+
+    cudnn.benchmark = True
 
     global_best_val_acc = 0
 
@@ -141,6 +159,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
             # reset the running loss and corrects
             running_loss = 0.0
             running_corrects = 0.0
+
+            print(optimizer)
 
             # set model to train() or eval() mode depending on whether it is trained
             # or being validated. Primarily affects layers such as BatchNorm or Dropout.
@@ -188,9 +208,9 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
                 #         'epoch': epoch + 1,
                 #         'state_dict': model.state_dict(),
                 #         'opt_dict': optimizer.state_dict(),
-                #     }, os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar'))
+                #     }, os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar'))
                 #     print("Save model at {}\n".format(
-                #         os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
+                #         os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
 
             print("[{}] Epoch: {}/{} Loss: {} Acc: {}".format(phase, epoch+1, nEpochs, epoch_loss, epoch_acc))
             stop_time = timeit.default_timer()
@@ -201,8 +221,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'opt_dict': optimizer.state_dict(),
-            }, os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + '.pth.tar'))
-            print("Save model at {}\n".format(os.path.join(save_dir, 'models', saveName + '_epoch-' + str(epoch) + '.pth.tar')))
+            }, os.path.join(SAVE_FILE_FOLDER, EXP_NAME + '_epoch-' + str(epoch) + '.pth.tar'))
+            print("Save model at {}\n".format(os.path.join(SAVE_FILE_FOLDER, EXP_NAME + '_epoch-' + str(epoch) + '.pth.tar')))
 
         if useTest and epoch % test_interval == (test_interval - 1):
             model.eval()
