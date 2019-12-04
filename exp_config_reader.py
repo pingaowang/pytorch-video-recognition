@@ -41,10 +41,10 @@ N_WORKERS = config['n_workers']
 
 # Log & Save
 # log path
-LOG_ROOT = osp.join(ROOT, "exp_logs", PROJECT_NAME)
+LOG_ROOT = osp.join("exp_logs", EXP_NAME)
 LOG_PATH = osp.join(LOG_ROOT, EXP_NAME)
 # save path
-SAVE_ROOT = osp.join(ROOT, "saved_models", PROJECT_NAME)
+SAVE_ROOT = osp.join("saved_models", EXP_NAME)
 
 # Model exp_run_config
 MODEL_NAME = config['model_name']
