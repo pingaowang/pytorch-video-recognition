@@ -21,8 +21,11 @@ class VideoDataset(Dataset):
             preprocess (bool): Determines whether to preprocess dataset. Default is False.
     """
 
-    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False):
+    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False, grayscale=True, norm_para=[127.5, 127.5, 127.5]):
         self.root_dir, self.output_dir = Path.db_dir(dataset)
+
+        self.grayscale = grayscale
+        self.norm_para = [90.0, 98.0, 102.0]  # norm_para or [90.0, 98.0, 102.0]
 
         # folder: Root. the path of data_root/train_or_val_or_test
         folder = os.path.join(self.output_dir, split)
@@ -229,7 +232,7 @@ class VideoDataset(Dataset):
 
     def normalize(self, buffer):
         for i, frame in enumerate(buffer):
-            frame -= np.array([[[90.0, 98.0, 102.0]]])
+            frame -= np.array([[self.norm_para]])
             buffer[i] = frame
 
         return buffer
@@ -242,7 +245,13 @@ class VideoDataset(Dataset):
         frame_count = len(frames)
         buffer = np.empty((frame_count, self.resize_height, self.resize_width, 3), np.dtype('float32'))
         for i, frame_name in enumerate(frames):
-            frame = np.array(cv2.imread(frame_name)).astype(np.float64)
+            if self.grayscale:
+                im = cv2.resize(cv2.imread(frame_name, 0), (171, 128))
+                frame = np.array(im).astype(np.float64)
+                frame = np.repeat(frame[:, :, np.newaxis], 3, axis=2)
+            else:
+                im = cv2.resize(cv2.imread(frame_name), (171, 128))
+                frame = np.array(im).astype(np.float64)
             buffer[i] = frame
 
         return buffer

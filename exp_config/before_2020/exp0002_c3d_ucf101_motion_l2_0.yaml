@@ -9,7 +9,7 @@ if_pretrain: False
 ##-- Dataset exp_run_config --##
 # the path of the index csv file of the used data (like UCF101's csv file).
 # The original file is : 'ucf101.csv'
-data_path: /home/pingao/datasets/ucf101_as_frames
+data_path: /home/pingao/datasets/ucf101_motion
 dataset: ucf101
 n_classes: 16
 n_workers: 4

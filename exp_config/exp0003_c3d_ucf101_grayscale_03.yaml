@@ -1,6 +1,6 @@
 ##-- Experiment info exp_run_config --##
 # experiment name. Keep it unique.
-exp_name: exp0002_c3d_ucf101_motion_l2_0
+exp_name: exp0003_c3d_ucf101_grayscale_03
 use_test: True
 n_test_interval: 20
 if_pretrain: False
@@ -26,9 +26,9 @@ batch_size: 8
 snapshot: 10
 max_epoch: 400
 
-init_learning_rate: 0.00001
+init_learning_rate: 0.001
 scheduler_step_size: 100
-scheduler_gamma: 0.1
+scheduler_gamma: 0.5
 momentum: 0.9
 wd: 0
 

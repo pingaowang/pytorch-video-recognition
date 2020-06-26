@@ -1,9 +1,15 @@
+import os
+
 import timeit
 from datetime import datetime
 import socket
 import os
 import glob
 from tqdm import tqdm
+
+from utils.general import *
+
+from utils.roc_score import multiclass_roc_score
 
 import torch
 from tensorboardX import SummaryWriter
@@ -15,6 +21,7 @@ from dataloaders.dataset import VideoDataset
 from network import C3D_model, R2Plus1D_model, R3D_model
 
 from exp_config_reader import *
+clip_len = 16
 
 import torch.backends.cudnn as cudnn
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -105,8 +112,9 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
         print('We only implemented C3D and R2Plus1D models.')
         raise NotImplementedError
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
-    optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
-    print(optimizer)
+    # optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
+    optimizer = optim.Adam(train_params, lr=lr, weight_decay=WD)
+    # print(optimizer)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=SCHEDULER_STEP_SIZE,
                                           gamma=SCHEDULER_GAMMA)  # the scheduler divides the lr by 10 every 10 epochs
 
@@ -139,9 +147,9 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
     writer = SummaryWriter(logdir=LOG_PATH)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=16, preprocess=IF_PREPROCESS_TRAIN), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16, preprocess=IF_PREPROCESS_VAL), batch_size=BS, num_workers=N_WORKERS)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16, preprocess=IF_PREPROCESS_TEST), batch_size=BS, num_workers=N_WORKERS)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=clip_len, preprocess=IF_PREPROCESS_TRAIN, grayscale=False), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=clip_len, preprocess=IF_PREPROCESS_VAL, grayscale=False), batch_size=BS, num_workers=N_WORKERS)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=clip_len, preprocess=IF_PREPROCESS_TEST, grayscale=False), batch_size=BS, num_workers=N_WORKERS)
 
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}
@@ -159,8 +167,12 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
             # reset the running loss and corrects
             running_loss = 0.0
             running_corrects = 0.0
+            # running_roc = 0.0
 
-            print(optimizer)
+            list_pred = list()
+            list_label = list()
+
+            # print(optimizer)
 
             # set model to train() or eval() mode depending on whether it is trained
             # or being validated. Primarily affects layers such as BatchNorm or Dropout.
@@ -171,7 +183,9 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
             else:
                 model.eval()
 
-            for inputs, labels in tqdm(trainval_loaders[phase]):
+            # for inputs, labels in tqdm(trainval_loaders[phase]):
+            run_count = 0
+            for inputs, labels in trainval_loaders[phase]:
                 # move inputs and labels to the device the training is taking place on
                 inputs = Variable(inputs, requires_grad=True).to(device)
                 labels = Variable(labels).to(device)
@@ -193,16 +207,37 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
 
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                # try:
+                #     running_roc += roc_auc_score(labels.data.cpu(), preds.cpu())
+                # except:
+                #     y_true = labels.data.cpu().tolist()
+                #     y_true_2 = y_true.copy()
+                #     for i_cls in range(N_CLASSES):
+                #         y_true_2.append(i_cls)
+                #
+                #     y_pred = preds.cpu().tolist()
+                #     y_pred_2 = y_pred.copy()
+                #     for i_cls in range(N_CLASSES):
+                #         y_pred_2.append(i_cls)
+                #
+                #     running_roc += roc_auc_score(y_true_2, y_pred_2)
+                #
+                # run_count += 1
+                list_label += labels.data.cpu().tolist()
+                list_pred += preds.cpu().tolist()
 
             epoch_loss = running_loss / trainval_sizes[phase]
             epoch_acc = running_corrects.double() / trainval_sizes[phase]
+            epoch_roc = multiclass_roc_score(label=list_label, pred=list_pred, n_cls=N_CLASSES)
 
             if phase == 'train':
                 writer.add_scalar('data/train_loss_epoch', epoch_loss, epoch)
                 writer.add_scalar('data/train_acc_epoch', epoch_acc, epoch)
+                writer.add_scalar('data/train_roc_epoch', epoch_roc, epoch)
             else:
                 writer.add_scalar('data/val_loss_epoch', epoch_loss, epoch)
                 writer.add_scalar('data/val_acc_epoch', epoch_acc, epoch)
+                writer.add_scalar('data/val_roc_epoch', epoch_roc, epoch)
                 # if epoch_acc >= global_best_val_acc:
                 #     torch.save({
                 #         'epoch': epoch + 1,
@@ -212,9 +247,9 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
                 #     print("Save model at {}\n".format(
                 #         os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(epoch) + 'ValAcc_{:10.4f}_'.format(epoch_loss) + '.pth.tar')))
 
-            print("[{}] Epoch: {}/{} Loss: {} Acc: {}".format(phase, epoch+1, nEpochs, epoch_loss, epoch_acc))
+            print("[{}] Epoch: {}/{} Loss: {} Acc: {}, ROC:{}".format(phase, epoch+1, nEpochs, epoch_loss, epoch_acc, epoch_roc))
             stop_time = timeit.default_timer()
-            print("Execution time: " + str(stop_time - start_time) + "\n")
+            # print("Execution time: " + str(stop_time - start_time) + "\n")
 
         if epoch % save_epoch == (save_epoch - 1):
             torch.save({
@@ -230,8 +265,13 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
 
             running_loss = 0.0
             running_corrects = 0.0
+            # running_roc = 0.0
+            list_pred = list()
+            list_label = list()
 
-            for inputs, labels in tqdm(test_dataloader):
+            # for inputs, labels in tqdm(test_dataloader):
+            run_count = 0
+            for inputs, labels in test_dataloader:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -243,16 +283,25 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
 
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                # try:
+                #     running_roc += roc_auc_score(labels.data.cpu(), preds.cpu())
+                # except:
+                #     running_roc += 0.5
+                # run_count += 1
+                list_label += labels.data.cpu().tolist()
+                list_pred += preds.cpu().tolist()
 
             epoch_loss = running_loss / test_size
             epoch_acc = running_corrects.double() / test_size
+            epoch_roc = multiclass_roc_score(label=list_label, pred=list_pred, n_cls=N_CLASSES)
 
             writer.add_scalar('data/test_loss_epoch', epoch_loss, epoch)
             writer.add_scalar('data/test_acc_epoch', epoch_acc, epoch)
+            writer.add_scalar('data/test_roc_epoch', epoch_roc, epoch)
 
-            print("[test] Epoch: {}/{} Loss: {} Acc: {}".format(epoch+1, nEpochs, epoch_loss, epoch_acc))
+            print("[test] Epoch: {}/{} Loss: {} Acc:{} ROC: {}".format(epoch+1, nEpochs, epoch_loss, epoch_acc, epoch_roc))
             stop_time = timeit.default_timer()
-            print("Execution time: " + str(stop_time - start_time) + "\n")
+            # print("Execution time: " + str(stop_time - start_time) + "\n")
 
     writer.close()
 
