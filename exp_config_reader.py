@@ -52,6 +52,8 @@ BATCH_SIZE = config['batch_size']
 SNAPSHOT = config['snapshot']
 MAX_EPOCH = config['max_epoch']
 N_CLASSES = config['n_classes']
+CLIP_LEN = config['clip_len']
+GRAY_SCALE = config['gray_scale']
 # aug for optimizers:
 INIT_LEARNING_RATE = config['init_learning_rate']
 SCHEDULER_STEP_SIZE = config['scheduler_step_size']

@@ -21,8 +21,6 @@ from dataloaders.dataset import VideoDataset
 from network import C3D_model, R2Plus1D_model, R3D_model
 
 from exp_config_reader import *
-clip_len = 16
-
 import torch.backends.cudnn as cudnn
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
@@ -30,6 +28,9 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 # Use GPU if available else revert to CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Device being used:", device)
+
+clip_len = CLIP_LEN
+grayscale = GRAY_SCALE
 
 nEpochs = MAX_EPOCH  # Number of epochs for training
 BS = BATCH_SIZE  # batch size
@@ -147,9 +148,9 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
     writer = SummaryWriter(logdir=LOG_PATH)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=clip_len, preprocess=IF_PREPROCESS_TRAIN, grayscale=False), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=clip_len, preprocess=IF_PREPROCESS_VAL, grayscale=False), batch_size=BS, num_workers=N_WORKERS)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=clip_len, preprocess=IF_PREPROCESS_TEST, grayscale=False), batch_size=BS, num_workers=N_WORKERS)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=clip_len, preprocess=IF_PREPROCESS_TRAIN, grayscale=grayscale), batch_size=BS, shuffle=True, num_workers=N_WORKERS)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=clip_len, preprocess=IF_PREPROCESS_VAL, grayscale=grayscale), batch_size=BS, num_workers=N_WORKERS)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=clip_len, preprocess=IF_PREPROCESS_TEST, grayscale=grayscale), batch_size=BS, num_workers=N_WORKERS)
 
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}

@@ -21,13 +21,15 @@ class VideoDataset(Dataset):
             preprocess (bool): Determines whether to preprocess dataset. Default is False.
     """
 
-    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False, grayscale=True, norm_para=[127.5, 127.5, 127.5]):
+    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False, grayscale=True):
         self.root_dir, self.output_dir = Path.db_dir(dataset)
 
         self.grayscale = grayscale
-        self.norm_para = [90.0, 98.0, 102.0]  # norm_para or [90.0, 98.0, 102.0]
-
-        # folder: Root. the path of data_root/train_or_val_or_test
+        if self.grayscale:
+            self.norm_para = [127.5, 127.5, 127.5]  # [127.5, 127.5, 127.5] or [90.0, 98.0, 102.0]
+        else:
+            self.norm_para = [90.0, 98.0, 102.0]
+            # folder: Root. the path of data_root/train_or_val_or_test
         folder = os.path.join(self.output_dir, split)
         # listdir_folder: A list of all classes' folders
         listdir_folder = os.listdir(folder)
@@ -233,6 +235,7 @@ class VideoDataset(Dataset):
     def normalize(self, buffer):
         for i, frame in enumerate(buffer):
             frame -= np.array([[self.norm_para]])
+            frame = frame / 255.
             buffer[i] = frame
 
         return buffer

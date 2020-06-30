@@ -1,0 +1,34 @@
+##-- Experiment info exp_run_config --##
+# experiment name. Keep it unique.
+exp_name: exp0007_c3d_seizurev16_03
+use_test: True
+n_test_interval: 20
+if_pretrain: False
+
+
+##-- Dataset exp_run_config --##
+# the path of the index csv file of the used data (like UCF101's csv file).
+# The original file is : 'ucf101.csv'
+data_path: /home/pingao/datasets/seizure/dataset_seizure_v16
+dataset: ucf101
+n_classes: 2
+n_workers: 4
+
+
+##-- Load saved model exp_run_config --##
+resume_model_path:
+resume_epoch: 0
+
+
+##-- Model exp_run_config --##
+model_name: C3D
+batch_size: 8
+snapshot: 50
+max_epoch: 100
+
+init_learning_rate: 0.0001
+scheduler_step_size: 100
+scheduler_gamma: 0.1
+momentum: 0.9
+wd: 0.05
+
