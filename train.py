@@ -47,6 +47,7 @@ IF_PREPROCESS_VAL = False
 IF_PREPROCESS_TEST = False
 
 dataset = DATASET # Options: hmdb51 or ucf101
+_optimizer = OPTIMIZER
 
 if dataset == 'hmdb51':
     num_classes = 51
@@ -113,8 +114,10 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
         print('We only implemented C3D and R2Plus1D models.')
         raise NotImplementedError
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
-    # optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
-    optimizer = optim.Adam(train_params, lr=lr, weight_decay=WD)
+    if _optimizer == "SGD":
+        optimizer = optim.SGD(train_params, lr=lr, momentum=MOMENTUM, weight_decay=WD)
+    elif _optimizer == "Adam":
+        optimizer = optim.Adam(train_params, lr=lr, weight_decay=WD)
     # print(optimizer)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=SCHEDULER_STEP_SIZE,
                                           gamma=SCHEDULER_GAMMA)  # the scheduler divides the lr by 10 every 10 epochs
