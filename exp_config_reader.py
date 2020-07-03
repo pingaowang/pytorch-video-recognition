@@ -33,6 +33,10 @@ IF_PRETRAIN = config['if_pretrain']
 # Load saved model exp_run_config
 RESUM_MODEL_PATH = config['resume_model_path']
 RESUM_EPOCH = config['resume_epoch']
+try:
+    RESUM_OPTIMIZER = config['resume_optimizer']
+except:
+    RESUM_OPTIMIZER = False
 
 # Dataset
 DATA_PATH = config['data_path']

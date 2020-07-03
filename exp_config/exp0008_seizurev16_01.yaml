@@ -18,7 +18,7 @@ n_workers: 4
 ##-- Load saved model exp_run_config --##
 resume_model_path:
 resume_epoch: 0
-
+resume_optimizer: False
 
 ##-- Model exp_run_config --##
 model_name: C3D

@@ -125,24 +125,25 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
     model.to(device)
     criterion.to(device)
 
-    if resume_epoch == 0:
-        if resume_model_path == None:
-            print("Training {} from scratch...".format(modelName))
-        else:
-            checkpoint = torch.load(
-                resume_model_path,
-                map_location=lambda storage, loc: storage)  # Load all tensors onto the CPU
-            print("Initializing weights from: {}...".format(
-                resume_model_path))
-            model.load_state_dict(checkpoint['state_dict'])
-            optimizer.load_state_dict(checkpoint['opt_dict'])
+    # if resume_epoch == 0:
+    if resume_model_path == None:
+        print("Training {} from scratch...".format(modelName))
     else:
-        checkpoint = torch.load(os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
-                                map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
-        print("Initializing weights from: {}...".format(
-            os.path.join(SAVE_FILE_FOLDER, EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar')))
+        checkpoint = torch.load(
+            resume_model_path,
+            map_location=lambda storage, loc: storage)  # Load all tensors onto the CPU
+        print("Initializing weights from: {}...".format(resume_model_path))
         model.load_state_dict(checkpoint['state_dict'])
-        optimizer.load_state_dict(checkpoint['opt_dict'])
+        if RESUM_OPTIMIZER:
+            optimizer.load_state_dict(checkpoint['opt_dict'])
+        # resume_epoch
+    # else:
+    #     checkpoint = torch.load(os.path.join(SAVE_FILE_FOLDER, 'models', EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar'),
+    #                             map_location=lambda storage, loc: storage)   # Load all tensors onto the CPU
+    #     print("Initializing weights from: {}...".format(
+    #         os.path.join(SAVE_FILE_FOLDER, EXP_NAME + '_epoch-' + str(resume_epoch - 1) + '.pth.tar')))
+    #     model.load_state_dict(checkpoint['state_dict'])
+    #     optimizer.load_state_dict(checkpoint['opt_dict'])
 
     print('Total params: %.2fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
     model.to(device)
@@ -163,7 +164,7 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
 
     global_best_val_acc = 0
 
-    for epoch in range(resume_epoch, num_epochs):
+    for epoch in range(num_epochs):
         # each epoch has a training and validation step
         for phase in ['train', 'val']:
             start_time = timeit.default_timer()

@@ -1,7 +1,7 @@
 ##-- Experiment info exp_run_config --##
 # SGD as it in paper
 # experiment name. Keep it unique.
-exp_name: exp0008_seizurev16_02
+exp_name: exp0008_seizurev16_04
 use_test: True
 n_test_interval: 10
 if_pretrain: False
@@ -18,7 +18,9 @@ n_workers: 4
 
 ##-- Load saved model exp_run_config --##
 resume_model_path:
+# usually keep resume_epoch = 0
 resume_epoch: 0
+resume_optimizer: False
 
 
 ##-- Model exp_run_config --##
@@ -33,7 +35,7 @@ optimizer: SGD
 
 init_learning_rate: 0.003
 scheduler_step_size: 100
-scheduler_gamma: 0.1
+scheduler_gamma: 0.5
 momentum: 0.9
-wd: 0.005
+wd: 0
 
