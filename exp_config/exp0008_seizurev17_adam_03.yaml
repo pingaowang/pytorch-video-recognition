@@ -31,7 +31,7 @@ clip_len: 16
 gray_scale: True
 optimizer: Adam
 
-init_learning_rate: 0.003
+init_learning_rate: 0.0003
 scheduler_step_size: 100
 scheduler_gamma: 0.5
 momentum: 0.9
