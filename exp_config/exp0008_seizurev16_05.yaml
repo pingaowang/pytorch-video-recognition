@@ -1,0 +1,40 @@
+##-- Experiment info exp_run_config --##
+# SGD as it in paper
+# experiment name. Keep it unique.
+exp_name: exp0008_seizurev16_05
+use_test: True
+n_test_interval: 10
+if_pretrain: False
+
+
+##-- Dataset exp_run_config --##
+# the path of the index csv file of the used data (like UCF101's csv file).
+# The original file is : 'ucf101.csv'
+data_path: /home/pingao/datasets/seizure/dataset_seizure_v16
+dataset: ucf101
+n_classes: 2
+n_workers: 4
+
+
+##-- Load saved model exp_run_config --##
+resume_model_path:
+# usually keep resume_epoch = 0
+resume_epoch: 0
+resume_optimizer: False
+
+
+##-- Model exp_run_config --##
+model_name: C3D
+batch_size: 12
+snapshot: 50
+max_epoch: 500
+
+clip_len: 28
+gray_scale: True
+optimizer: SGD
+
+init_learning_rate: 0.003
+scheduler_step_size: 100
+scheduler_gamma: 0.5
+momentum: 0.9
+wd: 0.1
