@@ -1,6 +1,6 @@
 ##-- Experiment info exp_run_config --##
 # experiment name. Keep it unique.
-exp_name: exp0008_ucf101_color_02
+exp_name: exp0008_ucf101_color_03
 use_test: True
 n_test_interval: 5
 if_pretrain: False
