@@ -23,11 +23,11 @@ resume_epoch: 0
 
 ##-- Model exp_run_config --##
 model_name: C3D
-batch_size: 24
+batch_size: 12
 snapshot: 50
 max_epoch: 400
 
-clip_len: 16
+clip_len: 28
 gray_scale: True
 optimizer: SGD
 
