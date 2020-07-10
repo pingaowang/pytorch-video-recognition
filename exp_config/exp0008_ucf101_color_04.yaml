@@ -1,0 +1,37 @@
+##-- Experiment info exp_run_config --##
+# experiment name. Keep it unique.
+exp_name: exp0008_ucf101_color_04
+use_test: True
+n_test_interval: 5
+if_pretrain: False
+
+
+##-- Dataset exp_run_config --##
+# the path of the index csv file of the used data (like UCF101's csv file).
+# The original file is : 'ucf101.csv'
+data_path: /opt/pingao/proc_ucf/data/ucf101
+dataset: ucf101
+n_classes: 101
+n_workers: 8
+
+
+##-- Load saved model exp_run_config --##
+resume_model_path: /opt/pingao/pytorch-video-recognition/saved_models/exp0008_ucf101_color_03/exp0008_ucf101_color_03/exp0008_ucf101_color_03_epoch-149.pth.tar
+resume_epoch: 150
+resume_optimizer: False
+
+##-- Model exp_run_config --##
+model_name: C3D
+batch_size: 24
+snapshot: 5
+max_epoch: 400
+
+clip_len: 16
+gray_scale: False
+optimizer: SGD
+
+init_learning_rate: 0.001
+scheduler_step_size: 50
+scheduler_gamma: 0.5
+momentum: 0.9
+wd: 0.0005
