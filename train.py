@@ -103,6 +103,10 @@ def train_model(dataset=dataset, save_dir=SAVE_FILE_FOLDER, num_classes=num_clas
         model = C3D_model.C3D(num_classes=num_classes, pretrained=IF_PRETRAIN)
         train_params = [{'params': C3D_model.get_1x_lr_params(model), 'lr': lr},
                         {'params': C3D_model.get_10x_lr_params(model), 'lr': lr * 10}]
+    elif modelName == 'C3D_td5':
+        model = C3D_model.C3D_td5(num_classes=num_classes, pretrained=IF_PRETRAIN)
+        train_params = [{'params': C3D_model.get_1x_lr_params(model), 'lr': lr},
+                        {'params': C3D_model.get_10x_lr_params(model), 'lr': lr * 10}]
     elif modelName == 'R2Plus1D':
         model = R2Plus1D_model.R2Plus1DClassifier(num_classes=num_classes, layer_sizes=(2, 2, 2, 2))
         train_params = [{'params': R2Plus1D_model.get_1x_lr_params(model), 'lr': lr},
