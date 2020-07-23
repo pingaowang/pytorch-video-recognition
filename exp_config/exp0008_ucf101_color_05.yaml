@@ -16,7 +16,7 @@ n_workers: 8
 
 
 ##-- Load saved model exp_run_config --##
-resume_model_path: /opt/pingao/pytorch-video-recognition/saved_models/exp0008_ucf101_color_03/exp0008_ucf101_color_03/exp0008_ucf101_color_04_epoch-39.pth.tar
+resume_model_path: /opt/pingao/pytorch-video-recognition/saved_models/exp0008_ucf101_color_04/exp0008_ucf101_color_04/exp0008_ucf101_color_04_epoch-39.pth.tar
 resume_epoch: 40
 resume_optimizer: False
 
